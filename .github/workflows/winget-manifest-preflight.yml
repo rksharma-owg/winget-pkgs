@@ -34,11 +34,11 @@ jobs:
           sparse-checkout: ${{ matrix.manifest_dir }}
           persist-credentials: false
       - name: Install current WinGet
-        shell: powershell
+        shell: pwsh
         run: |
-          Install-PackageProvider -Name NuGet -Force | Out-Null
-          Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery -AllowClobber
-          Repair-WinGetPackageManager -AllUsers -Latest -Force
+          $bundle = Join-Path $env:RUNNER_TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+          Invoke-WebRequest 'https://github.com/microsoft/winget-cli/releases/download/v1.29.380/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle' -OutFile $bundle
+          Add-AppxPackage -Path $bundle -ForceApplicationShutdown
       - name: Verify tested commit and WinGet
         shell: pwsh
         run: |
