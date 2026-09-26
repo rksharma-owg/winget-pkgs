@@ -38,7 +38,7 @@ jobs:
         run: |
           Install-PackageProvider -Name NuGet -Force | Out-Null
           Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery -AllowClobber
-          Repair-WinGetPackageManager -AllUsers
+          Repair-WinGetPackageManager -AllUsers -Latest -Force
       - name: Verify tested commit and WinGet
         shell: pwsh
         run: |
@@ -48,6 +48,8 @@ jobs:
           $winget = Get-Command winget -ErrorAction SilentlyContinue
           if (-not $winget) { throw 'winget is not available on this runner' }
           winget --info
+          $version = (winget --version).Trim().TrimStart('v')
+          if ([version]$version -lt [version]'1.12.0') { throw "WinGet $version does not support manifest schema 1.12" }
       - name: Validate manifest
         shell: pwsh
         run: |
