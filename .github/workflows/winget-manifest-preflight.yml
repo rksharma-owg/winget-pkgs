@@ -70,3 +70,10 @@ jobs:
           if ('${{ matrix.selector }}' -eq 'scope') { $arguments += @('--scope', '${{ matrix.value }}') }
           & winget @arguments
           if ($LASTEXITCODE -ne 0) { throw "winget install failed: $LASTEXITCODE" }
+      - name: Verify installed package is detected
+        shell: pwsh
+        run: |
+          $listing = winget list --id '${{ matrix.package }}' --exact --accept-source-agreements
+          $listing | Write-Output
+          if ($LASTEXITCODE -ne 0) { throw "winget did not detect the installed package: $LASTEXITCODE" }
+          if (($listing -join "`n") -notmatch [regex]::Escape('${{ matrix.package }}')) { throw 'Installed package ID was absent from winget list' }
