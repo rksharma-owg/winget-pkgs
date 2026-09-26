@@ -16,7 +16,7 @@ jobs:
       matrix:
         include:
           - package: ScooterSoftware.BeyondCompare.4
-            sha: 770dd31c6421a90e1b23c3b4938a5e1f41fc4d3a
+            sha: 3e28b538f50eb7c422aa6a5520106a4e39fb79fd
             manifest_dir: manifests/s/ScooterSoftware/BeyondCompare/4/4.4.7.28397
             selector: locale
             value: en-US
