@@ -37,8 +37,13 @@ jobs:
         shell: pwsh
         run: |
           $bundle = Join-Path $env:RUNNER_TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+          $archive = Join-Path $env:RUNNER_TEMP 'DesktopAppInstaller_Dependencies.zip'
+          $dependencies = Join-Path $env:RUNNER_TEMP 'DesktopAppInstaller_Dependencies'
           Invoke-WebRequest 'https://github.com/microsoft/winget-cli/releases/download/v1.29.380/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle' -OutFile $bundle
-          Add-AppxPackage -Path $bundle -ForceApplicationShutdown
+          Invoke-WebRequest 'https://github.com/microsoft/winget-cli/releases/download/v1.29.380/DesktopAppInstaller_Dependencies.zip' -OutFile $archive
+          Expand-Archive -Path $archive -DestinationPath $dependencies
+          $x64 = (Get-ChildItem (Join-Path $dependencies 'x64') -Filter '*.appx').FullName
+          Add-AppxPackage -Path $bundle -DependencyPath $x64 -ForceApplicationShutdown
       - name: Verify tested commit and WinGet
         shell: pwsh
         run: |
