@@ -1,0 +1,59 @@
+name: Fork manifest preflight
+
+on:
+  push:
+    branches:
+      - codex/winget-manifest-preflight
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-install:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: ScooterSoftware.BeyondCompare.4
+            sha: 770dd31c6421a90e1b23c3b4938a5e1f41fc4d3a
+            manifest_dir: manifests/s/ScooterSoftware/BeyondCompare/4/4.4.7.28397
+            selector: locale
+            value: en-US
+          - package: JGraph.Draw
+            sha: b86f0315e53df83ad0b0a83b97eee76161996911
+            manifest_dir: manifests/j/JGraph/Draw/31.5.2
+            selector: scope
+            value: user
+    steps:
+      - name: Check out exact contribution commit
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ matrix.sha }}
+          filter: blob:none
+          sparse-checkout: ${{ matrix.manifest_dir }}
+          persist-credentials: false
+      - name: Verify tested commit and WinGet
+        shell: pwsh
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          $expected = '${{ matrix.sha }}'
+          if ($actual -ne $expected) { throw "Checked out $actual; expected $expected" }
+          $winget = Get-Command winget -ErrorAction SilentlyContinue
+          if (-not $winget) { throw 'winget is not available on this runner' }
+          winget --info
+      - name: Validate manifest
+        shell: pwsh
+        run: |
+          winget validate --manifest '${{ matrix.manifest_dir }}'
+          if ($LASTEXITCODE -ne 0) { throw "winget validate failed: $LASTEXITCODE" }
+      - name: Install selected manifest
+        shell: pwsh
+        run: |
+          winget settings --enable LocalManifestFiles
+          if ($LASTEXITCODE -ne 0) { throw "Could not enable LocalManifestFiles: $LASTEXITCODE" }
+          $arguments = @('install', '--manifest', '${{ matrix.manifest_dir }}', '--silent', '--accept-package-agreements', '--accept-source-agreements')
+          if ('${{ matrix.selector }}' -eq 'locale') { $arguments += @('--locale', '${{ matrix.value }}') }
+          if ('${{ matrix.selector }}' -eq 'scope') { $arguments += @('--scope', '${{ matrix.value }}') }
+          & winget @arguments
+          if ($LASTEXITCODE -ne 0) { throw "winget install failed: $LASTEXITCODE" }
