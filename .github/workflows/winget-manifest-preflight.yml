@@ -33,6 +33,12 @@ jobs:
           filter: blob:none
           sparse-checkout: ${{ matrix.manifest_dir }}
           persist-credentials: false
+      - name: Install current WinGet
+        shell: powershell
+        run: |
+          Install-PackageProvider -Name NuGet -Force | Out-Null
+          Install-Module -Name Microsoft.WinGet.Client -Force -Repository PSGallery -AllowClobber
+          Repair-WinGetPackageManager -AllUsers
       - name: Verify tested commit and WinGet
         shell: pwsh
         run: |
